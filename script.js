@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-analytics.js";
 import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
 // --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
@@ -51,15 +51,7 @@ function init(user) {
     setupEventListeners();
 
     // Check Drive Connection
-    const token = sessionStorage.getItem('googleAccessToken');
-    if (!token) {
-        document.getElementById('drive-connect-btn').style.display = 'flex';
-        // Optional: Alert user
-        console.log("Drive token missing");
-    } else {
-        document.getElementById('drive-connect-btn').style.display = 'none';
-        updateStorageUsage();
-    }
+    checkDriveConnection();
 }
 
 window.connectGoogleDrive = async function () {
@@ -405,8 +397,8 @@ window.saveDocument = async function () {
     }
 
     // Single File Logic
-    if (!selectedFile && !nameInput.value) {
-        alert('Please select a file or enter a name');
+    if (!selectedFile) {
+        alert('Please select a file to upload.');
         return;
     }
 
@@ -460,15 +452,41 @@ async function uploadToGoogleDrive(file, token) {
     formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     formData.append('file', file);
 
-    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
-        method: 'POST',
-        headers: new Headers({ 'Authorization': 'Bearer ' + token }),
-        body: formData
-    });
+    try {
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+            method: 'POST',
+            headers: new Headers({ 'Authorization': 'Bearer ' + token }),
+            body: formData
+        });
 
-    if (!response.ok) throw new Error('Drive Upload Failed');
-    const result = await response.json();
-    return result.id;
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Drive API Error:', errorText);
+
+            if (response.status === 401) {
+                sessionStorage.removeItem('googleAccessToken');
+                document.getElementById('drive-connect-btn').style.display = 'flex';
+                throw new Error("Session expired. Please reconnect Google Drive.");
+            }
+
+            let errorMsg = `Drive Upload Failed (${response.status})`;
+            try {
+                const errorObj = JSON.parse(errorText);
+                if (errorObj.error && errorObj.error.message) {
+                    errorMsg += ": " + errorObj.error.message;
+                }
+            } catch (e) {
+                // Ignore parsing error
+            }
+            throw new Error(errorMsg);
+        }
+
+        const result = await response.json();
+        return result.id;
+    } catch (error) {
+        console.error("Upload execution error:", error);
+        throw error;
+    }
 }
 
 function formatBytes(bytes, decimals = 2) {
@@ -478,6 +496,39 @@ function formatBytes(bytes, decimals = 2) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+async function checkDriveConnection() {
+    const token = sessionStorage.getItem('googleAccessToken');
+    if (!token) {
+        document.getElementById('drive-connect-btn').style.display = 'flex';
+        return;
+    }
+
+    // Verify token validity
+    try {
+        const response = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=1&fields=files(id)', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (response.status === 401) {
+            console.warn("Drive token expired during init check");
+            sessionStorage.removeItem('googleAccessToken');
+            document.getElementById('drive-connect-btn').style.display = 'flex';
+        } else if (response.ok) {
+            document.getElementById('drive-connect-btn').style.display = 'none';
+            updateStorageUsage();
+        } else {
+            // Other error (403 etc), maybe keep button visible
+            console.warn("Drive check failed with status", response.status);
+            document.getElementById('drive-connect-btn').style.display = 'flex';
+        }
+    } catch (e) {
+        console.error("Drive check error", e);
+        // On network error, maybe assume valid or show button? Safest to show button.
+        document.getElementById('drive-connect-btn').style.display = 'flex';
+    }
 }
 
 // DRAG AND DROP RECURSIVE SCANNER
@@ -1004,4 +1055,4 @@ function setupEventListeners() {
 }
 
 // Run
-init();
+// End of script
