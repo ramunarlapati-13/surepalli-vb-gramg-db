@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuFlow - Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"> <!-- Reusing existing styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Admin specific styles overrides */
+        .user-data-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-header h4 {
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .admin-table th {
+            text-align: left;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .admin-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .btn-toggle-json {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar (Simplified for Admin) -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Admin Panel</span>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active">
+                    <i class="fa-solid fa-database"></i>
+                    <span>Database Users</span>
+                </button>
+                <a href="index.html" class="nav-item">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to App</span>
+                </a>
+            </nav>
+
+            <div class="user-profile">
+                <div class="avatar" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">A</div>
+                <div class="user-info">
+                    <span class="name">Super Admin</span>
+                    <span class="role">Database Viewer</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar glass-panel">
+                <div class="search-bar" style="visibility: hidden;"></div> <!-- Spacer -->
+                <div class="actions">
+                    <div class="status-indicator">
+                        <span style="color: #10b981;">●</span> Live Connection
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="section-header">
+                    <h1>User Management System</h1>
+                    <button class="secondary-btn" onclick="toggleRawJson()">View Raw JSON</button>
+                </div>
+
+                <div id="formatted-display">
+                    <!-- Formatted user data cards will be injected here -->
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 20px;"></i>
+                        <p>Syncing with Realtime Database...</p>
+                    </div>
+                </div>
+
+                <div id="raw-json-section" class="data-section hidden">
+                    <h3>Raw Data Dump</h3>
+                    <div id="json-display" class="json-viewer">
+                        Loading data...
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="refresh-btn" onclick="window.location.reload()">
+        <i class="fa-solid fa-rotate-right"></i>
+    </button>
+
+    <script type="module" src="admin.js"></script>
+    <script>
+        function toggleRawJson() {
+            const section = document.getElementById('raw-json-section');
+            section.classList.toggle('hidden');
+        }
+    </script>
+</body>
+
+</html>

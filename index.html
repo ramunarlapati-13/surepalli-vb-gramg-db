@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,16 +10,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar glass-panel">
             <div class="logo">
                 <i class="fa-solid fa-layer-group"></i>
-                <span>DocuFlow</span>
+                <span id="welcome-msg">DocuFlow</span>
             </div>
-            
+
             <nav class="nav-menu">
                 <button class="nav-item active" data-category="all">
                     <i class="fa-solid fa-grid-2"></i>
@@ -32,15 +35,34 @@
                     <i class="fa-solid fa-plus"></i>
                     <span>New Category</span>
                 </button>
-            </nav>
-
-            <div class="user-profile">
-                <div class="avatar">U</div>
-                <div class="user-info">
-                    <span class="name">User</span>
-                    <span class="role">Admin</span>
+                <div class="storage-status">
+                    <div class="storage-info">
+                        <i class="fa-solid fa-cloud"></i>
+                        <span>Storage</span>
+                        <span class="storage-percent" id="storage-percent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="storage-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="storage-detail" id="storage-detail">Calculating...</div>
+                    <div class="storage-detail" id="storage-remaining"
+                        style="font-weight: 600; color: var(--primary); margin-top: 4px;">Remaining: 5 GB</div>
                 </div>
-            </div>
+
+                <div class="user-profile">
+                    <div class="avatar">U</div>
+                    <div class="user-info">
+                        <span class="name">User</span>
+                        <span class="role">Admin</span>
+                    </div>
+                    <button class="icon-btn" id="drive-connect-btn" onclick="connectGoogleDrive()"
+                        title="Connect Google Drive" style="display: none; color: #34d399;">
+                        <i class="fa-brands fa-google-drive"></i>
+                    </button>
+                    <button class="icon-btn logout-btn" onclick="logout()" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
         </aside>
 
         <!-- Main Content -->
@@ -51,7 +73,11 @@
                     <input type="text" id="search-input" placeholder="Search documents...">
                 </div>
                 <div class="actions">
-                    <button class="icon-btn"><i class="fa-regular fa-bell"></i></button>
+                    <button class="secondary-btn" id="zip-download-btn" onclick="downloadCategoryAsZip()"
+                        title="Download Category as ZIP">
+                        <i class="fa-solid fa-file-zipper"></i>
+                        <span>Download ZIP</span>
+                    </button>
                     <button class="primary-btn" onclick="openUploadModal()">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
                         <span>Upload</span>
@@ -63,7 +89,8 @@
                 <div class="section-header">
                     <h1 id="page-title">All Documents</h1>
                     <div class="view-controls">
-                        <button class="icon-btn active" id="grid-view-btn"><i class="fa-solid fa-border-all"></i></button>
+                        <button class="icon-btn active" id="grid-view-btn"><i
+                                class="fa-solid fa-border-all"></i></button>
                         <button class="icon-btn" id="list-view-btn"><i class="fa-solid fa-list"></i></button>
                     </div>
                 </div>
@@ -71,9 +98,10 @@
                 <div id="document-grid" class="document-grid">
                     <!-- Documents will be injected here -->
                 </div>
-                
+
                 <div id="empty-state" class="empty-state hidden">
-                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/folder-is-empty-4064360-3363921.png" alt="Empty">
+                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/folder-is-empty-4064360-3363921.png"
+                        alt="Empty">
                     <h3>No documents found</h3>
                     <p>Upload a document to get started</p>
                 </div>
@@ -89,10 +117,18 @@
                 <button class="close-btn" onclick="closeUploadModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
+                <div class="upload-mode-switch">
+                    <button class="mode-btn active" onclick="setUploadMode('file')" id="mode-file">File</button>
+                    <button class="mode-btn" onclick="setUploadMode('folder')" id="mode-folder">Folder</button>
+                </div>
                 <div class="drop-zone" id="drop-zone">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <p>Drag & Drop files here or <span>Browse</span></p>
+                    <p id="drop-text">Drag & Drop files here or <span>Browse</span></p>
                     <input type="file" id="file-input" hidden>
+                    <input type="file" id="folder-input" hidden webkitdirectory directory multiple>
+                </div>
+                <div id="file-preview" class="file-preview hidden">
+                    <!-- Preview content injected here -->
                 </div>
                 <div class="form-group">
                     <label>Document Name</label>
@@ -143,6 +179,47 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="modal-overlay hidden">
+        <div class="modal glass-panel preview-modal-size">
+            <div class="modal-header">
+                <h2 id="preview-title">Document Preview</h2>
+                <button class="close-btn" onclick="closePreviewModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body preview-content-center">
+                <div id="preview-visual" class="preview-large-icon">
+                    <!-- Icon or Image goes here -->
+                </div>
+                <div class="preview-info-card">
+                    <div class="info-row">
+                        <span class="label">Name</span>
+                        <span class="value" id="view-name"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Category</span>
+                        <span id="view-category"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Format</span>
+                        <span class="value" id="view-format"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Size</span>
+                        <span class="value" id="view-size"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Uploaded</span>
+                        <span class="value" id="view-date"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="primary-btn" onclick="closePreviewModal()">Close Preview</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
 </body>
+
 </html>
