@@ -692,6 +692,95 @@ body {
     color: #ef4444;
 }
 
+/* Mobile Responsiveness */
+.menu-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--text-main);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 1000;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+        background: rgba(13, 17, 23, 0.98);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .menu-toggle {
+        display: flex;
+    }
+
+    .main-content {
+        padding: 16px;
+    }
+
+    .top-bar {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .search-bar {
+        width: 100%;
+    }
+
+    .document-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .logo {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .actions {
+        display: none;
+        /* Hide non-essential headers on small phones if needed */
+    }
+
+    #zip-download-btn {
+        display: none;
+        /* Usually better to hide complex actions on tiny screens */
+    }
+
+    .modal {
+        width: 95%;
+        margin: 10px;
+        padding: 20px;
+    }
+
+    .upload-mode-switch {
+        flex-direction: column;
+    }
+
+    .document-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .doc-card {
+        padding: 12px;
+    }
+}
+
 /* File Preview Styles */
 .file-preview {
     background: rgba(0, 0, 0, 0.2);

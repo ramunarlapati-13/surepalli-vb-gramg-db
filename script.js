@@ -44,7 +44,6 @@ const pageTitle = document.getElementById('page-title');
 const previewModal = document.getElementById('preview-modal');
 
 // Initialize
-// Initialize
 function init(user) {
     updateUserProfile(user);
     saveUserProfile(user);
@@ -155,22 +154,25 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function updateUserProfile(user) {
-    const avatarEl = document.querySelector('.user-profile .avatar');
-    const nameEl = document.querySelector('.user-profile .name');
-    const roleEl = document.querySelector('.user-profile .role');
+    const avatarEl = document.getElementById('user-avatar');
+    const nameEl = document.getElementById('user-name');
+    const welcomeMsg = document.getElementById('welcome-msg');
 
     if (user) {
         const displayName = user.displayName || user.email.split('@')[0];
-        avatarEl.innerText = displayName[0].toUpperCase();
-        nameEl.innerText = displayName;
-        roleEl.innerText = user.email === 'admin@docuflow.com' ? 'Super Admin' : 'Member';
-
-        const welcomeMsg = document.getElementById('welcome-msg');
+        if (avatarEl) avatarEl.innerText = displayName[0].toUpperCase();
+        if (nameEl) nameEl.innerText = displayName;
         if (welcomeMsg) welcomeMsg.innerText = "Welcome, " + displayName;
     }
 }
 
-function setupRealtimeListeners(user) {
+window.toggleSidebar = function (e) {
+    if (e) e.stopPropagation();
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.classList.toggle('active');
+}
+
+async function setupRealtimeListeners(user) {
     const userPath = `users/${user.uid}`;
 
     // Categories components
@@ -323,6 +325,12 @@ window.filterCategory = function (catId) {
 
     renderCategories();
     renderDocuments();
+
+    // Auto-close sidebar on mobile
+    if (window.innerWidth <= 992) {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) sidebar.classList.remove('active');
+    }
 }
 window.saveDocument = async function () {
     const nameInput = document.getElementById('doc-name');
@@ -982,6 +990,17 @@ function setupEventListeners() {
     // New Category Button
     const addCatBtn = document.querySelector('.add-category-btn');
     if (addCatBtn) addCatBtn.onclick = () => window.openNewCategoryModal();
+
+    // Close sidebar on click outside (mobile)
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.addEventListener('click', () => {
+            if (window.innerWidth <= 992) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar) sidebar.classList.remove('active');
+            }
+        });
+    }
 }
 
 // Run
