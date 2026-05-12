@@ -1,4 +1,4 @@
-# 📁 DocuFlow
+# 📁 RexDocs
 
 > A modern, cloud-powered document management web application built with vanilla HTML/CSS/JavaScript, Firebase, and Google Drive integration.
 
