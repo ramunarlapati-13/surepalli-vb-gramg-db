@@ -44,7 +44,7 @@ The app supports both individual file uploads and full folder uploads, making it
 ## 📂 Project Structure
 
 ```
-surepalli-vb-gramg/
+rexdocs/
 ├── index.html       # Main document dashboard (authenticated users)
 ├── login.html       # Login / Sign-up page (Email + Google OAuth)
 ├── admin.html       # Admin panel — live Firebase database viewer
